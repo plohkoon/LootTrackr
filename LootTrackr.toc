@@ -1,0 +1,11 @@
+## Interface: 110000
+## Version: 1.0.0
+## Title: LootTrackr
+## Notes: An add-on to record loot rolls in raid
+## Author: plohkoon
+
+## SavedVariables: LootTrackrSessionData, LootTrackrEncounterData, LootTrackrDropData
+
+Events.lua
+UI.lua
+MapButton.lua
