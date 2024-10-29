@@ -1,11 +1,8 @@
-## Interface: 110000
+## Interface: 110005
 ## Version: 1.0.0
 ## Title: LootTrackr
 ## Notes: An add-on to record loot rolls in raid
 ## Author: plohkoon
-
-## Dependencies: Ace3
-## OptionalDeps: LibDataBroker-1.1, LibDBIcon-1.0
 
 ## SavedVariables: LootTrackrDB
 
