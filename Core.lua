@@ -8,8 +8,11 @@ function LootTrackr:OnInitialize()
 
   self.db = LibStub("AceDB-3.0"):New("LootTrackrDB", {
     global ={
+      ---@type table<string, table> @ A table mapping session IDS to some session Data
       sessions = {},
+      ---@type table<string, table<string, table>> @ A table mapping session and encounter IDS to the encounter Data
       encounters = {},
+      ---@type table<string, table<string, table<string, table>>> @ A table mapping session, encounter, and drop IDS to the drop Data
       drops = {}
     },
     profile = {

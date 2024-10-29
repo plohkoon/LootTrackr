@@ -191,27 +191,36 @@ function LootTrackrEvents:appendEncounterToSession(encounter)
     return
   end
 
-  if self.encounters[self.currentSession] == nil then
-    self.encounters[self.currentSession] = {}
+  local sessionEncounters = self.encounters[self.currentSession]
+
+  if sessionEncounters == nil then
+    sessionEncounters = {}
+    self.encounters[self.currentSession] = sessionEncounters
   end
 
-  self.encounters[self.currentSession] = self.encounters[self.currentSession] or {}
-  local encounters = self.encounters[self.currentSession]
 
-  encounters[encounter.encounterID] = encounter
+  sessionEncounters[encounter.encounterID] = encounter
 end
 
+---@param encounter EncounterLootInfo
+---@param drop EncounterLootDropInfo
 function LootTrackrEvents:appendDropToEncounter(encounter, drop)
   if self.currentSession == nil then
     self:Print("No session, skipping")
     return
   end
 
-  if self.encounters[encounter.encounterID] == nil then
-    self:Print("No encounter, skipping")
-    return
+  local sessionDrops = self.drops[self.currentSession]
+  if sessionDrops == nil then
+    sessionDrops = {}
+    self.drops[self.currentSession] = sessionDrops
   end
 
-  local drops = self.drops[encounter.encounterID] or {}
-  drops[drop.lootListID] = drop
+  local encounterDrops = sessionDrops[encounter.encounterID]
+  if encounterDrops == nil then
+    encounterDrops = {}
+    sessionDrops[encounter.encounterID] = encounterDrops
+  end
+
+  encounterDrops[drop.lootListID] = drop
 end
