@@ -1,3 +1,26 @@
 {
-  "Lua.diagnostics.globals": ["SlashCmdList", "WorldMapFrame"]
+  "Lua.diagnostics.globals": [
+    "SlashCmdList",
+    "WorldMapFrame",
+    "ReloadUI",
+    "hash_SlashCmdList",
+    "DEFAULT_CHAT_FRAME",
+    "NOT_BOUND",
+    "ColorPickerFrame",
+    "OpacitySliderFrame",
+    "OKAY",
+    "ACCEPT",
+    "NORMAL_FONT_COLOR_CODE",
+    "FONT_COLOR_CODE_CLOSE",
+    "IsSecureCmd",
+    "NUM_CHAT_WINDOWS",
+    "ChatEdit_GetActiveWindow",
+    "SELECTED_CHAT_FRAME",
+    "NORMAL_FONT_COLOR",
+    "CANCEL",
+    "Settings",
+    "InterfaceOptions_AddCategory",
+    "SetDesaturation",
+    "CLOSE"
+  ]
 }

@@ -1,37 +1,129 @@
-local eventFrame = CreateFrame("Frame")
+local AceAddon = LibStub("AceAddon-3.0")
+---@class LootTrackr : AceAddon, AceConsole-3.0
+local LootTrackr = AceAddon:GetAddon("LootTrackr")
+---@class LootTrackrEvents : AceModule, AceConsole-3.0, AceEvent-3.0
+local LootTrackrEvents = LootTrackr:NewModule("Events", "AceEvent-3.0", "AceConsole-3.0")
 
-local addonName, addonTable = ...
-addonTable.eventFrame = eventFrame
+function LootTrackrEvents:OnInitialize()
+  self:Print("Initializing the event tracking module")
+  self.db = LootTrackr.db
 
-print("Loot tracking time")
+  self.sessions = self.db.global.sessions
+  self.encounters = self.db.global.encounters
+  self.drops = self.db.global.drops
+  self.currentSession = nil
+end
+
+function LootTrackrEvents:OnEnable()
+  self:Print("Enabling the event tracking module")
+  -- self:RegisterEvent("START_LOOT_ROLL")
+  -- self:RegisterEvent("LOOT_ITEM_AVAILABLE")
+  -- self:RegisterEvent("LOOT_ROLLS_COMPLETE")
+  -- self:RegisterEvent("CONFIRM_LOOT_ROLL")
+
+  self:RegisterEvent("PLAYER_ENTERING_WORLD")
+  self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+  self:RegisterEvent("LOOT_HISTORY_UPDATE_ENCOUNTER")
+  self:RegisterEvent("LOOT_HISTORY_UPDATE_DROP")
+end
+
+function LootTrackrEvents:OnDisable()
+  self:Print("Disabling the event tracking module")
+end
 
 -- https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_FrameXML/Mainline/LootHistory.lua
 
-function eventFrame:OnEvent(event, ...)
-  self[event](self, ...)
+----------------------
+-- Event handlers
+----------------------
+
+function LootTrackrEvents:LOOT_HISTORY_UPDATE_ENCOUNTER(encounterID)
+  print("Loot history updated", encounterID)
+
+  if self.currentSession == nil then
+    self:Print("No session, skipping")
+    return
+  end
+
+  local encounter = C_LootHistory.GetInfoForEncounter(encounterID)
+
+  if encounter == nil then
+    self:Print("No encounter found, skipping")
+    return
+  end
+
+  self:appendEncounterToSession(encounter)
+  local drops = C_LootHistory.GetSortedDropsForEncounter(encounterID)
+
+  if drops == nil then
+    self:Print("No drops found, skipping")
+    return
+  end
+
+  for _, drop in ipairs(drops) do
+    self:appendDropToEncounter(encounter, drop)
+  end
 end
 
-function eventFrame:START_LOOT_ROLL(rollID, rollTime, lootHandle)
-  print("Starting Loot Roll", rollID, rollTime, lootHandle)
+function LootTrackrEvents:LOOT_HISTORY_UPDATE_DROP(encounterID, lootListID)
+  print("Loot history drop updated", encounterID, lootListID)
+
+  if self.currentSession == nil then
+    self:Print("No session, skipping")
+    return
+  end
+
+  local encounter = C_LootHistory.GetInfoForEncounter(encounterID)
+
+  if encounter == nil then
+    self:Print("No encounter found, skipping")
+    return
+  end
+
+  self:appendEncounterToSession(encounter)
+
+  local info = C_LootHistory.GetSortedInfoForDrop(encounterID, lootListID)
+
+  if info == nil then
+    self:Print("No drop found, skipping")
+    return
+  end
+
+  self:appendDropToEncounter(encounter, info)
 end
 
-function eventFrame:LOOT_ITEM_AVAILABLE(itemTooltip, lootHandle)
-  print("A new loot item is available", itemTooltip, lootHandle)
+function LootTrackrEvents:PLAYER_ENTERING_WORLD()
+  self:Print("Player entering world")
+  self:updateSessionIfRequired()
 end
 
-function eventFrame:LOOT_ROLLS_COMPLETE(lootHandle)
-  print("A loot roll is complete", lootHandle)
+function LootTrackrEvents:ZONE_CHANGED_NEW_AREA()
+  self:Print("Player changed zone")
+  self:updateSessionIfRequired()
 end
 
-function eventFrame:CONFIRM_LOOT_ROLL(rollID, rollType, confirmReason)
-  print("A loot roll has been confirmed", rollID, rollType, confirmReason)
+
+function LootTrackrEvents:START_LOOT_ROLL(rollID, rollTime, lootHandle)
+  self:Print("Starting Loot Roll", rollID, rollTime, lootHandle)
 end
 
-local function log(...)
-  print("[LootTrackr Event]", ...)
+function LootTrackrEvents:LOOT_ITEM_AVAILABLE(itemTooltip, lootHandle)
+  self:Print("A new loot item is available", itemTooltip, lootHandle)
 end
 
-function eventFrame:generateSessionID()
+function LootTrackrEvents:LOOT_ROLLS_COMPLETE(lootHandle)
+  self:Print("A loot roll is complete", lootHandle)
+end
+
+function LootTrackrEvents:CONFIRM_LOOT_ROLL(rollID, rollType, confirmReason)
+  self:Print("A loot roll has been confirmed", rollID, rollType, confirmReason)
+end
+
+----------------------
+-- Utility functions
+----------------------
+
+function LootTrackrEvents:generateSessionID()
   local playerGUID = UnitGUID("player")  -- Get the player's GUID
   local startTime = GetServerTime()      -- Get the current server time
   local instanceID = select(8, GetInstanceInfo()) or "0"  -- Get the instance ID
@@ -40,37 +132,8 @@ function eventFrame:generateSessionID()
   return sessionID
 end
 
-function eventFrame:ADDON_LOADED(name, ...)
-  if name == addonName then
-    log("Initializing LootTrackr")
-
-    -- Ensure the session data is loaded. We do this or {} thing to preserve
-    -- memory references so the data gets saved once the user logs out.
-
-    if LootTrackrSessionData == nil then
-      log("No SessionData, initializing")
-      LootTrackrSessionData = {}
-    end
-
-    if LootTrackrEncounterData == nil then
-      log("No EncounterData, initializing")
-      LootTrackrEncounterData = {}
-    end
-
-    if LootTrackrDropData == nil then
-      log("No DropData, initializing")
-      LootTrackrDropData = {}
-    end
-
-    self.sessions = LootTrackrSessionData
-    self.encounters = LootTrackrEncounterData
-    self.currentSession = nil
-    self.drops = LootTrackrDropData
-  end
-end
-
 -- Getter for current session
-function eventFrame:session()
+function LootTrackrEvents:session()
   if self.currentSession == nil then
     return nil
   else
@@ -79,7 +142,7 @@ function eventFrame:session()
 end
 
 -- End the current session
-function eventFrame:endSession()
+function LootTrackrEvents:endSession()
   if self.currentSession == nil then
     return
   end
@@ -89,7 +152,7 @@ function eventFrame:endSession()
 end
 
 -- Starts a new session and saves it to the data store
-function eventFrame:startSession()
+function LootTrackrEvents:startSession()
   local instanceName, _, difficultyID, difficultyName, _, _, _, instanceID = GetInstanceInfo()
 
   self.currentSession = self:generateSessionID()
@@ -103,36 +166,28 @@ function eventFrame:startSession()
   }
 end
 
-function eventFrame:updateSessionIfRequired()
+function LootTrackrEvents:updateSessionIfRequired()
   local inInstance, instanceType = IsInInstance()
   local instanceID = select(8, GetInstanceInfo())
 
   if inInstance and instanceType == "raid" then
     if self.currentSession == nil then
-      log("Player entering raid, starting session")
+      self:Print("Player entering raid, starting session")
       self:startSession()
     elseif self.sessions[self.currentSession].instanceID ~= instanceID then
-      log("Player shifted instance, starting a new session")
+      self:Print("Player shifted instance, starting a new session")
       self:endSession()
       self:startSession()
     end
   elseif inInstance and self.currentSession ~= nil then
-    log("Player leaving raid, ending session")
+    self:Print("Player leaving raid, ending session")
     self:endSession()
   end
 end
 
-function eventFrame:PLAYER_ENTERING_WORLD()
-  self:updateSessionIfRequired()
-end
-
-function eventFrame:ZONE_CHANGED_NEW_AREA()
-  self:updateSessionIfRequired()
-end
-
-function eventFrame:appendEncounterToSession(encounter)
+function LootTrackrEvents:appendEncounterToSession(encounter)
   if self.currentSession == nil then
-    log("No session, skipping")
+    self:Print("No session, skipping")
     return
   end
 
@@ -146,80 +201,17 @@ function eventFrame:appendEncounterToSession(encounter)
   encounters[encounter.encounterID] = encounter
 end
 
-function eventFrame:appendDropToEncounter(encounter, drop)
+function LootTrackrEvents:appendDropToEncounter(encounter, drop)
   if self.currentSession == nil then
-    log("No session, skipping")
+    self:Print("No session, skipping")
     return
   end
 
   if self.encounters[encounter.encounterID] == nil then
-    log("No encounter, skipping")
+    self:Print("No encounter, skipping")
     return
   end
 
   local drops = self.drops[encounter.encounterID] or {}
   drops[drop.lootListID] = drop
 end
-
-function eventFrame:LOOT_HISTORY_UPDATE_ENCOUNTER(encounterID)
-  print("Loot history updated", encounterID)
-
-  if self.currentSession == nil then
-    log("No session, skipping")
-    return
-  end
-
-  local encounter = C_LootHistory.GetInfoForEncounter(encounterID)
-
-  if encounter == nil then
-    log("No encounter found, skipping")
-    return
-  end
-
-  self:appendEncounterToSession(encounter)
-  local drops = C_LootHistory.GetSortedDropsForEncounter(encounterID)
-
-  if drops == nil then
-    log("No drops found, skipping")
-    return
-  end
-
-  for _, drop in ipairs(drops) do
-    self:appendDropToEncounter(encounter, drop)
-  end
-end
-
-function eventFrame:LOOT_HISTORY_UPDATE_DROP(encounterID, lootListID)
-  print("Loot history drop updated", encounterID, lootListID)
-
-  if self.currentSession == nil then
-    log("No session, skipping")
-    return
-  end
-
-  local encounter = C_LootHistory.GetInfoForEncounter(encounterID)
-
-  if encounter == nil then
-    log("No encounter found, skipping")
-    return
-  end
-
-  self:appendEncounterToSession(encounter)
-
-  local info = C_LootHistory.GetSortedInfoForDrop(encounterID, lootListID)
-
-  if info == nil then
-    log("No drop found, skipping")
-    return
-  end
-
-  self:appendDropToEncounter(encounter, info)
-end
-
-eventFrame:RegisterEvent("ADDON_LOADED")
-eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-eventFrame:RegisterEvent("LOOT_HISTORY_UPDATE_ENCOUNTER")
-eventFrame:RegisterEvent("LOOT_HISTORY_UPDATE_DROP")
-
-eventFrame:SetScript("OnEvent", eventFrame.OnEvent)
