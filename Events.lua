@@ -37,7 +37,7 @@ end
 -- Event handlers
 ----------------------
 
-function LootTrackrEvents:LOOT_HISTORY_UPDATE_ENCOUNTER(encounterID)
+function LootTrackrEvents:LOOT_HISTORY_UPDATE_ENCOUNTER(_eventName, encounterID)
   print("Loot history updated", encounterID)
 
   if self.currentSession == nil then
@@ -65,7 +65,7 @@ function LootTrackrEvents:LOOT_HISTORY_UPDATE_ENCOUNTER(encounterID)
   end
 end
 
-function LootTrackrEvents:LOOT_HISTORY_UPDATE_DROP(encounterID, lootListID)
+function LootTrackrEvents:LOOT_HISTORY_UPDATE_DROP(_eventName, encounterID, lootListID)
   print("Loot history drop updated", encounterID, lootListID)
 
   if self.currentSession == nil then
@@ -103,19 +103,19 @@ function LootTrackrEvents:ZONE_CHANGED_NEW_AREA()
 end
 
 
-function LootTrackrEvents:START_LOOT_ROLL(rollID, rollTime, lootHandle)
+function LootTrackrEvents:START_LOOT_ROLL(_eventName, rollID, rollTime, lootHandle)
   self:Print("Starting Loot Roll", rollID, rollTime, lootHandle)
 end
 
-function LootTrackrEvents:LOOT_ITEM_AVAILABLE(itemTooltip, lootHandle)
+function LootTrackrEvents:LOOT_ITEM_AVAILABLE(_eventName, itemTooltip, lootHandle)
   self:Print("A new loot item is available", itemTooltip, lootHandle)
 end
 
-function LootTrackrEvents:LOOT_ROLLS_COMPLETE(lootHandle)
+function LootTrackrEvents:LOOT_ROLLS_COMPLETE(_eventName, lootHandle)
   self:Print("A loot roll is complete", lootHandle)
 end
 
-function LootTrackrEvents:CONFIRM_LOOT_ROLL(rollID, rollType, confirmReason)
+function LootTrackrEvents:CONFIRM_LOOT_ROLL(_eventName, rollID, rollType, confirmReason)
   self:Print("A loot roll has been confirmed", rollID, rollType, confirmReason)
 end
 
@@ -192,10 +192,9 @@ function LootTrackrEvents:appendEncounterToSession(encounter)
   end
 
   local sessionEncounters = self.encounters[self.currentSession]
-
   if sessionEncounters == nil then
-    sessionEncounters = {}
-    self.encounters[self.currentSession] = sessionEncounters
+    self.encounters[self.currentSession] = {}
+    sessionEncounters = self.encounters[self.currentSession]
   end
 
 
@@ -212,14 +211,14 @@ function LootTrackrEvents:appendDropToEncounter(encounter, drop)
 
   local sessionDrops = self.drops[self.currentSession]
   if sessionDrops == nil then
-    sessionDrops = {}
-    self.drops[self.currentSession] = sessionDrops
+    self.drops[self.currentSession] = {}
+    sessionDrops = self.drops[self.currentSession]
   end
 
   local encounterDrops = sessionDrops[encounter.encounterID]
   if encounterDrops == nil then
-    encounterDrops = {}
-    sessionDrops[encounter.encounterID] = encounterDrops
+    sessionDrops[encounter.encounterID] = {}
+    encounterDrops = sessionDrops[encounter.encounterID]
   end
 
   encounterDrops[drop.lootListID] = drop
