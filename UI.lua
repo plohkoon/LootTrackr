@@ -105,8 +105,7 @@ function LootTrackrUI:BuildDropUI(parent, sessionID, encounterID)
 end
 
 function LootTrackrUI:BuildDropItem(drop)
-  local itemHyperlink = drop.itemHyperlink
-
+  -- Create the main container
   local dropContainer = AceGUI:Create("SimpleGroup")
   dropContainer:SetLayout("Flow")
   dropContainer:SetFullWidth(true)
@@ -121,30 +120,101 @@ function LootTrackrUI:BuildDropItem(drop)
   headerLabel:SetText(drop.itemHyperlink)
   headerLabel:SetFullWidth(true)
   headerGroup:AddChild(headerLabel)
-
   dropContainer:AddChild(headerGroup)
 
-  -- Table: Players Rolls
-  local rollsGroup = AceGUI:Create("InlineGroup")
-  rollsGroup:SetTitle("Rolls")
-  rollsGroup:SetLayout("List")
-  rollsGroup:SetFullWidth(true)
+  -- Roll Table
+  local rollTable = AceGUI:Create("InlineGroup")
+  rollTable:SetTitle("Rolls")
+  rollTable:SetLayout("Flow")
+  rollTable:SetFullWidth(true)
+  dropContainer:AddChild(rollTable)
 
-  dropContainer:AddChild(rollsGroup)
+  local tableHeader = self:BuildRollRow({
+    "",
+    "Name",
+    "Class",
+    "Roll Type",
+    "Roll"
+  })
+  rollTable:AddChild(tableHeader)
 
-  -- Iterate over the rollInfos table to display each player's roll information
+  -- Create a row for each player's roll
   for _, rollInfo in ipairs(drop.rollInfos) do
-    local winnerMarker = rollInfo.isWinner and " [Winner]" or ""
-    local entryText = string.format("%s (%s): %d%s", 
-      rollInfo.playerName, rollInfo.playerClass, rollInfo.roll, winnerMarker)
-    
-    local rollEntry = AceGUI:Create("Label")
-    rollEntry:SetText(entryText)
-    rollEntry:SetFullWidth(true)
-    rollsGroup:AddChild(rollEntry)
+    local icon = ""
+    local playerName = rollInfo.playerName
+    local playerClass = rollInfo.playerClass
+    local rollTypeString = (function()
+      local switch = {
+        [0] = "Need",
+        [1] = "Need (OS)",
+        [2] = "Transmog",
+        [3] = "Greed",
+        [4] = "",
+        [5] = "Pass"
+      }
+      return switch[rollInfo.state] or ""
+    end)()
+
+    -- Convert to switch statement
+
+    local roll = rollInfo.roll
+
+    if rollInfo.isWinner then
+      icon = "Interface\\Icons\\INV_Misc_Coin_01"
+    end
+
+    if roll == nil then
+      roll = ""
+    end
+
+    local rowGroup = self:BuildRollRow({
+      icon,
+      playerName,
+      playerClass,
+      rollTypeString,
+      roll
+    })
+    rollTable:AddChild(rowGroup)
   end
 
   return dropContainer
+end
+
+function LootTrackrUI:BuildRollRow(columns)
+  local rowGroup = AceGUI:Create("SimpleGroup")
+  rowGroup:SetLayout("Flow")
+  rowGroup:SetFullWidth(true)
+
+  local iconColumn = AceGUI:Create("Label")
+  iconColumn:SetWidth(20)
+  iconColumn:SetHeight(10)
+  iconColumn:SetImageSize(15, 15)
+  iconColumn:SetImage(columns[1])
+  rowGroup:AddChild(iconColumn)
+
+  -- Name column
+  local nameLabel = AceGUI:Create("Label")
+  nameLabel:SetText(columns[2])
+  nameLabel:SetWidth(100)
+  local classColor = RAID_CLASS_COLORS[columns[3]]
+  if classColor ~= nil then
+    nameLabel:SetColor(classColor.r, classColor.g, classColor.b)
+  end
+  rowGroup:AddChild(nameLabel)
+
+  -- Roll Type column (for now, simply "Roll")
+  local rollTypeLabel = AceGUI:Create("Label")
+  rollTypeLabel:SetText(columns[4])
+  rollTypeLabel:SetWidth(80)
+  rowGroup:AddChild(rollTypeLabel)
+
+  -- Roll column
+  local rollLabel = AceGUI:Create("Label")
+  rollLabel:SetText(columns[5])
+  rollLabel:SetWidth(50)
+  rowGroup:AddChild(rollLabel)
+
+  return rowGroup
 end
 
 function LootTrackrUI:MissingDropsUI(parent)
