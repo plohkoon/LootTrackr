@@ -21,7 +21,8 @@
     "Settings",
     "InterfaceOptions_AddCategory",
     "SetDesaturation",
-    "CLOSE"
+    "CLOSE",
+    "ID"
   ],
   "Lua.diagnostics.disable": ["assign-type-mismatch"]
 }

@@ -106,26 +106,23 @@ end
 
 function LootTrackrUI:BuildDropItem(drop)
   -- Create the main container
-  local dropContainer = AceGUI:Create("SimpleGroup")
+  local dropContainer = AceGUI:Create("InlineGroup")
+  dropContainer:SetTitle(drop.itemHyperlink)
   dropContainer:SetLayout("Flow")
   dropContainer:SetFullWidth(true)
 
   -- Header: Item Information
-  local headerGroup = AceGUI:Create("InlineGroup")
-  headerGroup:SetTitle("Item Info")
-  headerGroup:SetLayout("Flow")
-  headerGroup:SetFullWidth(true)
 
-  local headerLabel = AceGUI:Create("Label")
-  headerLabel:SetText(drop.itemHyperlink)
-  headerLabel:SetFullWidth(true)
-  headerGroup:AddChild(headerLabel)
-  dropContainer:AddChild(headerGroup)
+  local itemInfo = self:BuildItemInfo(drop.itemHyperlink)
+  dropContainer:AddChild(itemInfo)
 
-  -- Roll Table
-  local rollTable = AceGUI:Create("InlineGroup")
-  rollTable:SetTitle("Rolls")
-  rollTable:SetLayout("Flow")
+  local rollHeading = AceGUI:Create("Heading")
+  rollHeading:SetText("Rolls")
+  rollHeading:SetFullWidth(true)
+  dropContainer:AddChild(rollHeading)
+
+  local rollTable = AceGUI:Create("SimpleGroup")
+  rollTable:SetLayout("List")
   rollTable:SetFullWidth(true)
   dropContainer:AddChild(rollTable)
 
@@ -178,6 +175,45 @@ function LootTrackrUI:BuildDropItem(drop)
   end
 
   return dropContainer
+end
+
+function LootTrackrUI:BuildItemInfo(sItemLink)
+  local itemID, itemType, itemSubType, itemEquipLoc, icon, _, _ = C_Item.GetItemInfoInstant(sItemLink)
+
+  local itemInfoGroup = AceGUI:Create("SimpleGroup")
+  itemInfoGroup:SetLayout("Flow")
+  itemInfoGroup:SetFullWidth(true)
+
+  local itemIcon = AceGUI:Create("Label")
+  itemIcon:SetImage(icon)
+  itemIcon:SetImageSize(50, 50)
+  itemIcon:SetWidth(60)
+  itemInfoGroup:AddChild(itemIcon)
+
+  local detailsGroup = AceGUI:Create("SimpleGroup")
+  detailsGroup:SetLayout("List")
+  itemInfoGroup:AddChild(detailsGroup)
+
+  local itemNameLabel = AceGUI:Create("Label")
+  itemNameLabel:SetText("Item Name: " .. "N/A")
+  itemNameLabel:SetFullWidth(true)
+  detailsGroup:AddChild(itemNameLabel)
+
+  local itemLevelLabel = AceGUI:Create("Label")
+  itemLevelLabel:SetText("Item Level: " .. "N/A")
+  itemLevelLabel:SetFullWidth(true)
+  detailsGroup:AddChild(itemLevelLabel)
+
+  local item = Item:CreateFromItemLink(sItemLink)
+  item:ContinueOnItemLoad(function()
+    local itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expansionID, setID, isCraftingReagent = C_Item.GetItemInfo(sItemLink)
+    local actualIlvl, previewLvl, sparseItemLvl = C_Item.GetDetailedItemLevelInfo(sItemLink)
+
+    itemNameLabel:SetText("Item Name: " .. itemName)
+    itemLevelLabel:SetText("Item Level: " .. actualIlvl)
+  end)
+
+  return itemInfoGroup
 end
 
 function LootTrackrUI:BuildRollRow(columns)
