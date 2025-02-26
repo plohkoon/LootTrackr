@@ -52,83 +52,106 @@ function LootTrackrUI:Open()
 
   self:Print("Creating the sidebar")
 
-  -- local raidEncouterSidebar = AceGUI:Create("TreeGroup")
-  -- raidEncouterSidebar:SetFullHeight(true)
-  -- raidEncouterSidebar:SetFullWidth(true)
-  -- raidEncouterSidebar:SetLayout("Flow")
-  -- raidEncouterSidebar:SetTree(self:BuildEncounterSessionTree())
-  -- frame:AddChild(raidEncouterSidebar)
+  local raidEncouterSidebar = AceGUI:Create("TreeGroup")
+  raidEncouterSidebar:SetFullHeight(true)
+  raidEncouterSidebar:SetFullWidth(true)
+  raidEncouterSidebar:SetLayout("Fill")
+  raidEncouterSidebar:SetTree(self:BuildEncounterSessionTree())
+  frame:AddChild(raidEncouterSidebar)
 
-  self:BuildDropdowns(frame)
-end
+  local scrollContainer = AceGUI:Create("ScrollFrame")
+  scrollContainer:SetLayout("List")
+  scrollContainer:SetFullHeight(true)
+  scrollContainer:SetFullWidth(true)
+  raidEncouterSidebar:AddChild(scrollContainer)
 
-function LootTrackrUI:BuildDropdowns(frame)
-  local activeSession = nil
+  raidEncouterSidebar:SetCallback("OnGroupSelected", function(widget, event, group)
+    local sessionID, encounterID = strsplit("\001", group)
 
-  local dropdownContainer = AceGUI:Create("SimpleGroup")
-  dropdownContainer:SetLayout("Flow")
-  dropdownContainer:SetFullWidth(true)
-  frame:AddChild(dropdownContainer)
-
-  local raidSessionDropdown = AceGUI:Create("Dropdown")
-  raidSessionDropdown:SetLabel("Session")
-  raidSessionDropdown:SetList(self:BuildSessionList())
-  -- raidSessionDropdown:SetWidth(200)
-  dropdownContainer:AddChild(raidSessionDropdown)
-
-  local raidEncounterDropdown = AceGUI:Create("Dropdown")
-  raidEncounterDropdown:SetLabel("Encounter")
-  raidEncounterDropdown:SetList(self:BuildEncounterList())
-  -- raidEncounterDropdown:SetWidth(200)
-  dropdownContainer:AddChild(raidEncounterDropdown)
-
-  local function changeActiveSession(key)
-    activeSession = key
-    raidEncounterDropdown:SetList(self:BuildEncounterList(activeSession))
-    raidEncounterDropdown:SetValue(nil)
-  end
-
-  raidSessionDropdown:SetCallback("OnValueChanged", function (_widget, _event, key)
-    changeActiveSession(key)
-  end)
-end
-
-function LootTrackrUI:BuildSessionList()
-  local sessions = self.db.global.sessions
-  local sessionList = {}
-
-  for sessionID, session in pairs(sessions) do
-    local encounters = self.db.global.encounters[sessionID]
-    local sessionDateTime = date("%Y-%m-%d", session.startTime)
-    local sessionName = session.instanceName
-
-    local label = "(" .. sessionDateTime .. ") " .. sessionName
-
-    if not (encounters == nil) then
-      sessionList[sessionID] = label
+    -- Only update the view if we have a session and encounter
+    if sessionID == nil or encounterID == nil then
+      return
     end
-  end
 
-  table.sort(sessionList, function (a, b)
-    return a[2] < b[2]
+    scrollContainer:ReleaseChildren()
+
+    self:BuildDropUI(scrollContainer, sessionID, encounterID)
+
+    scrollContainer:DoLayout()
   end)
-
-  return sessionList
 end
 
-function LootTrackrUI:BuildEncounterList(sessionID)
-  local encounters = self.db.global.encounters[sessionID]
-  local encounterList = {}
+function LootTrackrUI:BuildDropUI(parent, sessionID, encounterID)
+  local sessionDrops = self.db.global.drops[sessionID]
 
-  if encounters == nil then
-    return encounterList
+  if sessionDrops == nil then
+    self:Print("Missing Drops for Session")
+    self:MissingDropsUI(parent)
+    return
   end
 
-  for encounterID, encounter in pairs(encounters) do
-    encounterList[encounterID] = encounter.encounterName
+  local nEncounterID = tonumber(encounterID)
+  local encounterDrops = sessionDrops[nEncounterID]
+
+  if encounterDrops == nil then
+    self:Print("Missing Drops for Encounter")
+    self:MissingDropsUI(parent)
+    return
   end
 
-  return encounterList
+  for _, drop in pairs(encounterDrops) do
+    parent:AddChild(self:BuildDropItem(drop))
+  end
+end
+
+function LootTrackrUI:BuildDropItem(drop)
+  local itemHyperlink = drop.itemHyperlink
+
+  local dropContainer = AceGUI:Create("SimpleGroup")
+  dropContainer:SetLayout("Flow")
+  dropContainer:SetFullWidth(true)
+
+  -- Header: Item Information
+  local headerGroup = AceGUI:Create("InlineGroup")
+  headerGroup:SetTitle("Item Info")
+  headerGroup:SetLayout("Flow")
+  headerGroup:SetFullWidth(true)
+
+  local headerLabel = AceGUI:Create("Label")
+  headerLabel:SetText(drop.itemHyperlink)
+  headerLabel:SetFullWidth(true)
+  headerGroup:AddChild(headerLabel)
+
+  dropContainer:AddChild(headerGroup)
+
+  -- Table: Players Rolls
+  local rollsGroup = AceGUI:Create("InlineGroup")
+  rollsGroup:SetTitle("Rolls")
+  rollsGroup:SetLayout("List")
+  rollsGroup:SetFullWidth(true)
+
+  dropContainer:AddChild(rollsGroup)
+
+  -- Iterate over the rollInfos table to display each player's roll information
+  for _, rollInfo in ipairs(drop.rollInfos) do
+    local winnerMarker = rollInfo.isWinner and " [Winner]" or ""
+    local entryText = string.format("%s (%s): %d%s", 
+      rollInfo.playerName, rollInfo.playerClass, rollInfo.roll, winnerMarker)
+    
+    local rollEntry = AceGUI:Create("Label")
+    rollEntry:SetText(entryText)
+    rollEntry:SetFullWidth(true)
+    rollsGroup:AddChild(rollEntry)
+  end
+
+  return dropContainer
+end
+
+function LootTrackrUI:MissingDropsUI(parent)
+  local missingDropsLabel = AceGUI:Create("Label")
+  missingDropsLabel:SetText("Missing Drops")
+  missingDropsLabel:SetFullWidth(true)
+  parent:AddChild(missingDropsLabel)
 end
 
 function LootTrackrUI:BuildEncounterSessionTree()
@@ -141,27 +164,31 @@ function LootTrackrUI:BuildEncounterSessionTree()
 
     local label = "(" .. sessionDateTime .. ") " .. sessionName
 
-    local sessionNode = {
-      value=sessionID,
-      text=label,
-      children=self:BuildEncounterTreeForSession(session)
-    }
-    table.insert(tree, sessionNode)
+    local children = self:BuildEncounterTreeForSession(sessionID)
+
+    if children ~= nil and #children ~= 0 then
+      local sessionNode = {
+        value = sessionID,
+        text = label,
+        children = children
+      }
+      table.insert(tree, sessionNode)
+    end
   end
 
   return tree
 end
 
-function LootTrackrUI:BuildEncounterTreeForSession(session)
-  local encounters = self.db.global.encounters[session]
+function LootTrackrUI:BuildEncounterTreeForSession(sessionID)
+  local encounters = self.db.global.encounters[sessionID]
   local tree = {}
 
-  if encounters == nil or encounters[session.sessionID] == nil then
+  if encounters == nil then
     return tree
   end
 
   for encounterID, encounter in pairs(encounters) do
-    local encounterNode = { value=encounterID, text=encounter.name }
+    local encounterNode = { value=encounterID, text=encounter.encounterName }
     table.insert(tree, encounterNode)
   end
 
