@@ -16,7 +16,7 @@ function LootTrackrUI:OnInitialize()
   local dataObject = LDB:NewDataObject("LootTrackr", {
     type = "launcher",
     text = "LootTrackr",
-    icon = "Interface\\Icons\\INV_Misc_QuestionMark",
+    icon = "Interface\\AddOns\\LootTrackr\\Assets\\LootTrackr_icon.png",
     OnClick = function(clickedFrame, button)
       if button == "LeftButton" then
         self:Open()
@@ -274,6 +274,7 @@ function LootTrackrUI:BuildEncounterSessionTree()
 
     if children ~= nil and #children ~= 0 then
       local sessionNode = {
+        startTime = session.startTime,
         value = sessionID,
         text = label,
         children = children
@@ -281,6 +282,12 @@ function LootTrackrUI:BuildEncounterSessionTree()
       table.insert(tree, sessionNode)
     end
   end
+
+  -- Intentionally reverse sort by start time
+  -- so more recent sessions are at the top
+  table.sort(tree, function(a, b)
+    return a.startTime > b.startTime
+  end)
 
   return tree
 end
@@ -294,9 +301,19 @@ function LootTrackrUI:BuildEncounterTreeForSession(sessionID)
   end
 
   for encounterID, encounter in pairs(encounters) do
-    local encounterNode = { value=encounterID, text=encounter.encounterName }
+    local encounterNode = {
+      value = encounterID,
+      text=encounter.encounterName,
+      startTime = encounter.startTime
+    }
     table.insert(tree, encounterNode)
   end
+
+  -- Intentionally sort in order of encounter start time
+  -- This list is shorter then sessions so we want it forward in time
+  table.sort(tree, function(a, b)
+    return a.startTime < b.startTime
+  end)
 
   return tree
 end
