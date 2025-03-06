@@ -57,7 +57,8 @@ function Ace3:Open()
 	end
 	RefreshConfigs()
 	if next(configs) == nil then
-		self:Print("No Configs are Registered")
+		-- TODO - Settings for addon. Allow logging on
+		-- self:Print("No Configs are Registered")
 		return
 	end
 

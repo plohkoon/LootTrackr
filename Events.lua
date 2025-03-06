@@ -5,7 +5,8 @@ local LootTrackr = AceAddon:GetAddon("LootTrackr")
 local LootTrackrEvents = LootTrackr:NewModule("Events", "AceEvent-3.0", "AceConsole-3.0")
 
 function LootTrackrEvents:OnInitialize()
-  self:Print("Initializing the event tracking module")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Initializing the event tracking module")
   self.db = LootTrackr.db
 
   self.sessions = self.db.global.sessions
@@ -15,7 +16,8 @@ function LootTrackrEvents:OnInitialize()
 end
 
 function LootTrackrEvents:OnEnable()
-  self:Print("Enabling the event tracking module")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Enabling the event tracking module")
   -- self:RegisterEvent("START_LOOT_ROLL")
   -- self:RegisterEvent("LOOT_ITEM_AVAILABLE")
   -- self:RegisterEvent("LOOT_ROLLS_COMPLETE")
@@ -28,7 +30,8 @@ function LootTrackrEvents:OnEnable()
 end
 
 function LootTrackrEvents:OnDisable()
-  self:Print("Disabling the event tracking module")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Disabling the event tracking module")
 end
 
 -- https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_FrameXML/Mainline/LootHistory.lua
@@ -41,14 +44,16 @@ function LootTrackrEvents:LOOT_HISTORY_UPDATE_ENCOUNTER(_eventName, encounterID)
   print("Loot history updated", encounterID)
 
   if self.currentSession == nil then
-    self:Print("No session, skipping")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("No session, skipping")
     return
   end
 
   local encounter = C_LootHistory.GetInfoForEncounter(encounterID)
 
   if encounter == nil then
-    self:Print("No encounter found, skipping")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("No encounter found, skipping")
     return
   end
 
@@ -56,7 +61,8 @@ function LootTrackrEvents:LOOT_HISTORY_UPDATE_ENCOUNTER(_eventName, encounterID)
   local drops = C_LootHistory.GetSortedDropsForEncounter(encounterID)
 
   if drops == nil then
-    self:Print("No drops found, skipping")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("No drops found, skipping")
     return
   end
 
@@ -69,14 +75,16 @@ function LootTrackrEvents:LOOT_HISTORY_UPDATE_DROP(_eventName, encounterID, loot
   print("Loot history drop updated", encounterID, lootListID)
 
   if self.currentSession == nil then
-    self:Print("No session, skipping")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("No session, skipping")
     return
   end
 
   local encounter = C_LootHistory.GetInfoForEncounter(encounterID)
 
   if encounter == nil then
-    self:Print("No encounter found, skipping")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("No encounter found, skipping")
     return
   end
 
@@ -85,7 +93,8 @@ function LootTrackrEvents:LOOT_HISTORY_UPDATE_DROP(_eventName, encounterID, loot
   local info = C_LootHistory.GetSortedInfoForDrop(encounterID, lootListID)
 
   if info == nil then
-    self:Print("No drop found, skipping")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("No drop found, skipping")
     return
   end
 
@@ -93,30 +102,36 @@ function LootTrackrEvents:LOOT_HISTORY_UPDATE_DROP(_eventName, encounterID, loot
 end
 
 function LootTrackrEvents:PLAYER_ENTERING_WORLD()
-  self:Print("Player entering world")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Player entering world")
   self:updateSessionIfRequired()
 end
 
 function LootTrackrEvents:ZONE_CHANGED_NEW_AREA()
-  self:Print("Player changed zone")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Player changed zone")
   self:updateSessionIfRequired()
 end
 
 
 function LootTrackrEvents:START_LOOT_ROLL(_eventName, rollID, rollTime, lootHandle)
-  self:Print("Starting Loot Roll", rollID, rollTime, lootHandle)
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Starting Loot Roll", rollID, rollTime, lootHandle)
 end
 
 function LootTrackrEvents:LOOT_ITEM_AVAILABLE(_eventName, itemTooltip, lootHandle)
-  self:Print("A new loot item is available", itemTooltip, lootHandle)
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("A new loot item is available", itemTooltip, lootHandle)
 end
 
 function LootTrackrEvents:LOOT_ROLLS_COMPLETE(_eventName, lootHandle)
-  self:Print("A loot roll is complete", lootHandle)
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("A loot roll is complete", lootHandle)
 end
 
 function LootTrackrEvents:CONFIRM_LOOT_ROLL(_eventName, rollID, rollType, confirmReason)
-  self:Print("A loot roll has been confirmed", rollID, rollType, confirmReason)
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("A loot roll has been confirmed", rollID, rollType, confirmReason)
 end
 
 ----------------------
@@ -172,22 +187,26 @@ function LootTrackrEvents:updateSessionIfRequired()
 
   if inInstance and instanceType == "raid" then
     if self.currentSession == nil then
-      self:Print("Player entering raid, starting session")
+      -- TODO - Settings for addon. Allow logging on
+      -- self:Print("Player entering raid, starting session")
       self:startSession()
     elseif self.sessions[self.currentSession].instanceID ~= instanceID then
-      self:Print("Player shifted instance, starting a new session")
+      -- TODO - Settings for addon. Allow logging on
+      -- self:Print("Player shifted instance, starting a new session")
       self:endSession()
       self:startSession()
     end
   elseif inInstance and self.currentSession ~= nil then
-    self:Print("Player leaving raid, ending session")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("Player leaving raid, ending session")
     self:endSession()
   end
 end
 
 function LootTrackrEvents:appendEncounterToSession(encounter)
   if self.currentSession == nil then
-    self:Print("No session, skipping")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("No session, skipping")
     return
   end
 
@@ -205,7 +224,8 @@ end
 ---@param drop EncounterLootDropInfo
 function LootTrackrEvents:appendDropToEncounter(encounter, drop)
   if self.currentSession == nil then
-    self:Print("No session, skipping")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("No session, skipping")
     return
   end
 

@@ -9,7 +9,8 @@ local LootTrackr = AceAddon:GetAddon("LootTrackr")
 local LootTrackrUI = LootTrackr:NewModule("UI", "AceConsole-3.0")
 
 function LootTrackrUI:OnInitialize()
-  self:Print("Initializing the UI module")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Initializing the UI module")
   self.db = LootTrackr.db
 
   -- The minimap button
@@ -34,15 +35,18 @@ function LootTrackrUI:OnInitialize()
 end
 
 function LootTrackrUI:OnEnable()
-  self:Print("Enabling the UI module")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Enabling the UI module")
 end
 
 function LootTrackrUI:OnDisable()
-  self:Print("Disabling the UI module")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Disabling the UI module")
 end
 
 function LootTrackrUI:Open()
-  self:Print("Opening the UI")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Opening the UI")
   ---@type AceGUIFrame
   local frame = AceGUI:Create("Frame")
   frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
@@ -50,7 +54,8 @@ function LootTrackrUI:Open()
   frame:SetStatusText("Loot tracking time")
   frame:SetLayout("List")
 
-  self:Print("Creating the sidebar")
+  -- TODO - Settings for addon. Allow logging on
+  -- self:Print("Creating the sidebar")
 
   local raidEncouterSidebar = AceGUI:Create("TreeGroup")
   raidEncouterSidebar:SetFullHeight(true)
@@ -85,7 +90,8 @@ function LootTrackrUI:BuildDropUI(parent, sessionID, encounterID)
   local sessionDrops = self.db.global.drops[sessionID]
 
   if sessionDrops == nil then
-    self:Print("Missing Drops for Session")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("Missing Drops for Session")
     self:MissingDropsUI(parent)
     return
   end
@@ -94,7 +100,8 @@ function LootTrackrUI:BuildDropUI(parent, sessionID, encounterID)
   local encounterDrops = sessionDrops[nEncounterID]
 
   if encounterDrops == nil then
-    self:Print("Missing Drops for Encounter")
+    -- TODO - Settings for addon. Allow logging on
+    -- self:Print("Missing Drops for Encounter")
     self:MissingDropsUI(parent)
     return
   end
