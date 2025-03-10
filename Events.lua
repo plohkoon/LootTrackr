@@ -41,7 +41,7 @@ end
 ----------------------
 
 function LootTrackrEvents:LOOT_HISTORY_UPDATE_ENCOUNTER(_eventName, encounterID)
-  print("Loot history updated", encounterID)
+  -- self:Print("Loot history updated", encounterID)
 
   if self.currentSession == nil then
     -- TODO - Settings for addon. Allow logging on
@@ -72,7 +72,7 @@ function LootTrackrEvents:LOOT_HISTORY_UPDATE_ENCOUNTER(_eventName, encounterID)
 end
 
 function LootTrackrEvents:LOOT_HISTORY_UPDATE_DROP(_eventName, encounterID, lootListID)
-  print("Loot history drop updated", encounterID, lootListID)
+  -- self:Print("Loot history drop updated", encounterID, lootListID)
 
   if self.currentSession == nil then
     -- TODO - Settings for addon. Allow logging on
