@@ -153,7 +153,7 @@ function LootTrackrUI:BuildDropItem(drop)
         [1] = "Need (OS)",
         [2] = "Transmog",
         [3] = "Greed",
-        [4] = "",
+        [4] = "No Roll",
         [5] = "Pass"
       }
       return switch[rollInfo.state] or ""
@@ -247,7 +247,22 @@ function LootTrackrUI:BuildRollRow(columns)
 
   -- Roll Type column (for now, simply "Roll")
   local rollTypeLabel = AceGUI:Create("Label")
-  rollTypeLabel:SetText(columns[4])
+  local rollText = columns[4]
+  rollTypeLabel:SetText(rollText)
+  -- local rollFilename = (function()
+  --   local switch = {
+  --     ["Need"] = C_Texture.GetAtlasInfo("lootroll-icon-need"),
+  --     ["Need (OS)"] = C_Texture.GetAtlasInfo("loot-rollicon-needs"),
+  --     ["Transmog"] = C_Texture.GetAtlasInfo("loot-rollicon-transmog"),
+  --     ["Greed"] = C_Texture.GetAtlasInfo("loot-rollicon-greed"),
+  --     ["No Roll"] = C_Texture.GetAtlasInfo("loot-rollicon-pass"),
+  --     ["Pass"] = C_Texture.GetAtlasInfo("loot-rollicon-pass")
+  --   }
+  --   return (switch[rollText] or C_Texture.GetAtlasInfo("loot-rollicon-pass")).filename
+  -- end)()
+  -- rollTypeLabel:SetImage("Interface\\LootFrame\\LootRollFrame\\Loot-RollIcon-Transmog")
+  -- rollTypeLabel:SetImage(rollFilename)
+  -- rollTypeLabel:SetImageSize(15, 15)
   rollTypeLabel:SetWidth(80)
   rowGroup:AddChild(rollTypeLabel)
 
