@@ -1,5 +1,5 @@
 ## Interface: 110105
-## Version: 1.0.2
+## Version: 1.0.3
 ## Title: LootTrackr
 ## Notes: An add-on to record loot rolls in raid
 ## Author: plohkoon
