@@ -12,7 +12,8 @@ function LootTrackrUI:OnInitialize()
   -- TODO - Settings for addon. Allow logging on
   -- self:Print("Initializing the UI module")
   self.db = LootTrackr.db
-  self.open = false
+  ---@type AceGUIFrame
+  self.currentFrame = nil
 
   -- The minimap button
   local dataObject = LDB:NewDataObject("LootTrackr", {
@@ -46,17 +47,15 @@ function LootTrackrUI:OnDisable()
 end
 
 function LootTrackrUI:Open()
-  if self.open then
-    return
-  end
-
   -- TODO - Settings for addon. Allow logging on
   -- self:Print("Opening the UI")
   ---@type AceGUIFrame
-  local frame = AceGUI:Create("Frame")
+  local frame = self.frame or AceGUI:Create("Frame")
+  self.frame = frame
+  frame:ReleaseChildren()
   frame:SetCallback("OnClose", function(widget)
     AceGUI:Release(widget)
-    self.open = false
+    self.frame = nil
   end)
   frame:SetTitle("LootTrackr")
   frame:SetStatusText("Loot tracking time")
@@ -83,18 +82,17 @@ function LootTrackrUI:Open()
 
     scrollContainer:ReleaseChildren()
     if encounterID ~= nil then
-      self:Print("Selected Session: " .. sessionID .. " Encounter: " .. encounterID)
+      -- self:Print("Selected Session: " .. sessionID .. " Encounter: " .. encounterID)
       -- We have both a session and encounter
       self:BuildDropUI(scrollContainer, sessionID, encounterID)
     elseif sessionID ~= nil then
-      self:Print("Selected Session: " .. sessionID .. " No Encounter")
+      -- self:Print("Selected Session: " .. sessionID .. " No Encounter")
       self:BuildSessionUI(scrollContainer, sessionID)
     else
       -- No valid selection
     end
     scrollContainer:DoLayout()
   end)
-  self.open = true
 end
 
 function LootTrackrUI:BuildSessionUI(parent, sessionID)
@@ -103,7 +101,7 @@ function LootTrackrUI:BuildSessionUI(parent, sessionID)
   local drops = self.db.global.drops[sessionID]
 
   if sessionInfo == nil or encounters == nil or drops == nil then
-    self:Print("Missing session information for session ID: " .. sessionID)
+    -- self:Print("Missing session information for session ID: " .. sessionID)
     return
   end
 
@@ -130,6 +128,36 @@ function LootTrackrUI:BuildSessionUI(parent, sessionID)
 
   parent:AddChild(sessionInfoContainer)
 
+  ---@type AceGUIInlineGroup
+  local actionsContainer = AceGUI:Create("InlineGroup")
+  actionsContainer:SetTitle("Actions")
+  actionsContainer:SetLayout("Flow")
+  actionsContainer:SetFullWidth(true)
+  ---@type AceGUIButton
+  local exportButton = AceGUI:Create("Button")
+  exportButton:SetText("Export")
+  exportButton:SetCallback("OnClick", function()
+    -- TODO - Implement export functionality
+    self:Print("Unimplemented please check back later :)")
+  end)
+  local mergeButton = AceGUI:Create("Button")
+  mergeButton:SetText("Merge")
+  mergeButton:SetCallback("OnClick", function()
+    -- TODO - Implement merge functionality
+    self:Print("Unimplemented please check back later :)")
+  end)
+  local deleteButton = AceGUI:Create("Button")
+  deleteButton:SetText("Delete")
+  deleteButton:SetCallback("OnClick", function()
+    self.db.global.sessions[sessionID] = nil
+    self.db.global.encounters[sessionID] = nil
+    self.db.global.drops[sessionID] = nil
+  end)
+  actionsContainer:AddChild(exportButton)
+  actionsContainer:AddChild(mergeButton)
+  actionsContainer:AddChild(deleteButton)
+  parent:AddChild(actionsContainer)
+
   local encounterHeading = AceGUI:Create("Heading")
   encounterHeading:SetText("Encounters")
   encounterHeading:SetFullWidth(true)
@@ -144,7 +172,7 @@ function LootTrackrUI:BuildSessionUI(parent, sessionID)
     for _, drop in pairs(drops[encounterID] or {}) do
       local itemID, itemType, itemSubType, itemEquipLoc, icon, _, _ = C_Item.GetItemInfoInstant(drop.itemHyperlink)
 
-      self:Print(itemID, itemType, itemSubType, itemEquipLoc, icon)
+      -- self:Print(itemID, itemType, itemSubType, itemEquipLoc, icon)
 
       local dropItem = AceGUI:Create("SimpleGroup")
       dropItem:SetLayout("Flow")
