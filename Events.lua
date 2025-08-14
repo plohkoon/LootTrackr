@@ -176,6 +176,7 @@ function LootTrackrEvents:startSession()
     instanceID = instanceID,
     instanceName = instanceName,
     difficultID = difficultyID,
+    -- !GH - This is such a dumb typo, I need to figure out how to migrate data
     difficultName = difficultyName,
     startTime = GetServerTime(),
   }

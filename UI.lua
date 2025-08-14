@@ -12,6 +12,7 @@ function LootTrackrUI:OnInitialize()
   -- TODO - Settings for addon. Allow logging on
   -- self:Print("Initializing the UI module")
   self.db = LootTrackr.db
+  self.open = false
 
   -- The minimap button
   local dataObject = LDB:NewDataObject("LootTrackr", {
@@ -45,11 +46,18 @@ function LootTrackrUI:OnDisable()
 end
 
 function LootTrackrUI:Open()
+  if self.open then
+    return
+  end
+
   -- TODO - Settings for addon. Allow logging on
   -- self:Print("Opening the UI")
   ---@type AceGUIFrame
   local frame = AceGUI:Create("Frame")
-  frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
+  frame:SetCallback("OnClose", function(widget)
+    AceGUI:Release(widget)
+    self.open = false
+  end)
   frame:SetTitle("LootTrackr")
   frame:SetStatusText("Loot tracking time")
   frame:SetLayout("List")
@@ -73,17 +81,105 @@ function LootTrackrUI:Open()
   raidEncouterSidebar:SetCallback("OnGroupSelected", function(widget, event, group)
     local sessionID, encounterID = strsplit("\001", group)
 
-    -- Only update the view if we have a session and encounter
-    if sessionID == nil or encounterID == nil then
-      return
-    end
-
     scrollContainer:ReleaseChildren()
-
-    self:BuildDropUI(scrollContainer, sessionID, encounterID)
-
+    if encounterID ~= nil then
+      self:Print("Selected Session: " .. sessionID .. " Encounter: " .. encounterID)
+      -- We have both a session and encounter
+      self:BuildDropUI(scrollContainer, sessionID, encounterID)
+    elseif sessionID ~= nil then
+      self:Print("Selected Session: " .. sessionID .. " No Encounter")
+      self:BuildSessionUI(scrollContainer, sessionID)
+    else
+      -- No valid selection
+    end
     scrollContainer:DoLayout()
   end)
+  self.open = true
+end
+
+function LootTrackrUI:BuildSessionUI(parent, sessionID)
+  local sessionInfo = self.db.global.sessions[sessionID]
+  local encounters = self.db.global.encounters[sessionID]
+  local drops = self.db.global.drops[sessionID]
+
+  if sessionInfo == nil or encounters == nil or drops == nil then
+    self:Print("Missing session information for session ID: " .. sessionID)
+    return
+  end
+
+  local sessionInfoContainer = AceGUI:Create("InlineGroup")
+  sessionInfoContainer:SetTitle("Session Information")
+  sessionInfoContainer:SetLayout("List")
+  sessionInfoContainer:SetFullWidth(true)
+  local sessionDateLabel = AceGUI:Create("Label")
+  sessionDateLabel:SetText("Session Date: " .. date("%Y-%m-%d %H:%M:%S", sessionInfo.startTime))
+  local sessionInstanceNameLabel = AceGUI:Create("Label")
+  sessionInstanceNameLabel:SetText("Instance Name: " .. sessionInfo.instanceName)
+  local sessionDifficultyLabel = AceGUI:Create("Label")
+  sessionDifficultyLabel:SetText("Difficulty: " .. sessionInfo.difficultName)
+  local dropCount = 0
+  for _encounterId, encounterDrops in pairs(drops) do
+    dropCount = dropCount + #encounterDrops
+  end
+  local dropLabel = AceGUI:Create("Label")
+  dropLabel:SetText("Total Drops: " .. dropCount)
+  sessionInfoContainer:AddChild(sessionDateLabel)
+  sessionInfoContainer:AddChild(sessionInstanceNameLabel)
+  sessionInfoContainer:AddChild(sessionDifficultyLabel)
+  sessionInfoContainer:AddChild(dropLabel)
+
+  parent:AddChild(sessionInfoContainer)
+
+  local encounterHeading = AceGUI:Create("Heading")
+  encounterHeading:SetText("Encounters")
+  encounterHeading:SetFullWidth(true)
+  parent:AddChild(encounterHeading)
+
+  for encounterID, encounter in pairs(encounters) do
+    local encounterContainer = AceGUI:Create("InlineGroup")
+    encounterContainer:SetTitle(encounter.encounterName)
+    encounterContainer:SetLayout("List")
+    encounterContainer:SetFullWidth(true)
+
+    for _, drop in pairs(drops[encounterID] or {}) do
+      local itemID, itemType, itemSubType, itemEquipLoc, icon, _, _ = C_Item.GetItemInfoInstant(drop.itemHyperlink)
+
+      self:Print(itemID, itemType, itemSubType, itemEquipLoc, icon)
+
+      local dropItem = AceGUI:Create("SimpleGroup")
+      dropItem:SetLayout("Flow")
+      dropItem:SetFullWidth(true)
+
+      -- Item Image
+      local itemImage = AceGUI:Create("Label")
+      itemImage:SetImage(icon)
+      itemImage:SetImageSize(20, 20) -- Set the size of the image
+      itemImage:SetWidth(30)
+      dropItem:AddChild(itemImage)
+
+      -- Item Hyperlink
+      local dropLabel = AceGUI:Create("Label")
+      dropLabel:SetText(drop.itemHyperlink)
+      dropLabel:SetWidth(200)
+      dropItem:AddChild(dropLabel)
+
+      -- Player Name with Class Color
+      local playerNameLabel = AceGUI:Create("Label")
+      playerNameLabel:SetText(drop.winner.playerName)
+      playerNameLabel:SetWidth(200)
+      local classColor = RAID_CLASS_COLORS[drop.winner.playerClass]
+      if classColor then
+        playerNameLabel:SetColor(classColor.r, classColor.g, classColor.b)
+      else
+        playerNameLabel:SetColor(1, 1, 1) -- Default color if class not found
+      end
+      dropItem:AddChild(playerNameLabel)
+
+      encounterContainer:AddChild(dropItem)
+    end
+
+    parent:AddChild(encounterContainer)
+  end
 end
 
 function LootTrackrUI:BuildDropUI(parent, sessionID, encounterID)
