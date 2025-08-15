@@ -191,17 +191,20 @@ function LootTrackrUI:BuildSessionUI(parent, sessionID)
       dropLabel:SetWidth(200)
       dropItem:AddChild(dropLabel)
 
-      -- Player Name with Class Color
-      local playerNameLabel = AceGUI:Create("Label")
-      playerNameLabel:SetText(drop.winner.playerName)
-      playerNameLabel:SetWidth(200)
-      local classColor = RAID_CLASS_COLORS[drop.winner.playerClass]
-      if classColor then
-        playerNameLabel:SetColor(classColor.r, classColor.g, classColor.b)
-      else
-        playerNameLabel:SetColor(1, 1, 1) -- Default color if class not found
+      local winner = drop.winner
+      if winner then
+        -- Player Name with Class Color
+        local playerNameLabel = AceGUI:Create("Label")
+        playerNameLabel:SetText(drop.winner.playerName)
+        playerNameLabel:SetWidth(200)
+        local classColor = RAID_CLASS_COLORS[drop.winner.playerClass]
+        if classColor then
+          playerNameLabel:SetColor(classColor.r, classColor.g, classColor.b)
+        else
+          playerNameLabel:SetColor(1, 1, 1) -- Default color if class not found
+        end
+        dropItem:AddChild(playerNameLabel)
       end
-      dropItem:AddChild(playerNameLabel)
 
       encounterContainer:AddChild(dropItem)
     end
