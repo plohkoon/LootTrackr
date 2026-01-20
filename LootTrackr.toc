@@ -1,4 +1,4 @@
-## Interface: 110200
+## Interface: 110200, 120000
 ## Version: 1.0.5
 ## Title: LootTrackr
 ## Notes: An add-on to record loot rolls in raid
